@@ -518,9 +518,10 @@
 
     <script>
         // --- KONFIGURASI PENTING ---
-        // Apps Script akan mengisi URL ini saat di-render.
-        const WEB_APP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzXSZb7XPshw2fQLaHRNgQs5TEpijC98yAq_-tkYuz8E1IVCzxe-g7gZNzNlbplwMXAyQ/exec';
-        const ADMIN_PASSWORD = 'Patimura92@#%'; // WAJIB GANTI PASSWORD KUAT INI!
+        // GANTI INI DENGAN URL WEB APP DEPLOYMENT TERBARU ANDA
+        const WEB_APP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzY4hUvFiC-pkckHOoDeVHXex6dFZas_ofiq4n8QPc3xY2Qg0jXQ29MJPYigM6j7HTTkg/exec'; 
+        // WAJIB GANTI PASSWORD KUAT INI!
+        const ADMIN_PASSWORD = 'Patimura92@#%'; 
 
         const APPROVED_COLOR = '#3c763d';
         const PENDING_COLOR = '#9d5c0d';
@@ -573,23 +574,33 @@
         }
 
         /**
-         * Mengubah string waktu ISO (misal: 1899-12-30T02:17:56.000Z) menjadi HH:MM.
+         * Mengubah string waktu ISO (misal: 1899-12-30T02:17:56.000Z) atau string waktu (09:00) menjadi HH:MM.
          * @param {string | number} timeString
          */
         function formatTime(timeString) {
             if (!timeString) return '-';
             const timeStr = String(timeString);
 
-            // Apps Script sering mengembalikan format ISO, kita ambil HH:MM
-            const tIndex = timeStr.indexOf('T');
-
-            if (tIndex !== -1) {
-                return timeStr.slice(tIndex + 1, tIndex + 6);
-            }
-
-            // Jika format sudah HH:MM
+            // 1. Cek apakah format sudah HH:MM (ini terjadi saat data baru dikirim dari form)
             if (timeStr.match(/^\d{2}:\d{2}$/)) {
                 return timeStr;
+            }
+
+            // 2. Cek apakah format adalah ISO date-time string (ini terjadi saat data ditarik dari Apps Script)
+            try {
+                const dateObj = new Date(timeStr);
+                if (!isNaN(dateObj) && dateObj.getTime() !== 0) {
+                    // Ambil 5 karakter pertama (HH:MM) dari toTimeString()
+                    return dateObj.toTimeString().slice(0, 5);
+                }
+            } catch (e) {
+                // Biarkan lanjut ke fallback
+            }
+
+            // 3. Fallback: coba ambil substring setelah 'T' jika ada
+            const tIndex = timeStr.indexOf('T');
+            if (tIndex !== -1 && timeStr.length > tIndex + 5) {
+                return timeStr.slice(tIndex + 1, tIndex + 6);
             }
 
             return '-'; // Default jika format tidak dikenali
@@ -605,7 +616,6 @@
             let endpoint = `${WEB_APP_ENDPOINT}?action=${action}`;
 
             try {
-                // Baris 604: Panggilan fetch yang bermasalah di log error
                 const response = await fetch(endpoint);
 
                 if (!response.ok) {
@@ -641,11 +651,9 @@
                 }));
 
             } catch (e) {
-                // Baris 639: Penanganan error yang dilaporkan di log
                 console.error("Gagal memuat data:", e);
                 bookings = [];
                 alert(`Gagal memuat data jadwal. Silakan coba Refresh. Detail: ${e.message}`);
-                // PENTING: JANGAN PANGGIL init() ATAU setAdminMode() di sini
             }
         }
 
@@ -700,7 +708,7 @@
         async function updateBookingStatus(rowIndex, newStatus) {
             if (!isUserAdmin) return alert('Akses ditolak.');
 
-            if (!confirm(`Anda yakin ingin mengubah status data ID Baris #${rowIndex} menjadi ${newStatus.toUpperCase()}?`)) return;
+            if (!confirm(`Anda yakin ingin mengubah status data ID Baris #${rowIndex} menjadi ${newStatus.toUpperCase()}?\n(Notifikasi Email/WA akan dikirim ke Pemohon)`)) return;
 
             const formData = new URLSearchParams();
             formData.append('action', 'update_status');
@@ -720,9 +728,10 @@
                     await loadBookings();
                     renderTable();
                     updateDashboard();
-                    alert(`Status pengajuan berhasil diubah menjadi ${newStatus.toUpperCase()}.`);
+                    // PESAN SUKSES DENGAN NOTIFIKASI
+                    alert(`Status pengajuan berhasil diubah menjadi ${newStatus.toUpperCase()}.\nNotifikasi Email/WA otomatis telah dikirim ke pemohon.`);
                 } else {
-                    throw new Error(result.error || 'Gagal mengubah status.');
+                    throw new Error(result.error || 'Gagal mengubah status. Cek log Apps Script.');
                 }
 
             } catch (error) {
@@ -764,7 +773,6 @@
                 const bookingStatus = (booking.status || '').toLowerCase();
 
                 // 1. FILTER VISIBILITAS UTAMA (Publik vs Admin)
-                // Jika BUKAN admin, hanya tampilkan yang APPROVED.
                 if (!isUserAdmin && bookingStatus !== 'approved') {
                     return false;
                 }
@@ -973,9 +981,7 @@
 
         // --- FUNGSI ADMIN ---
 
-        /** * Mengubah tampilan berdasarkan status admin.
-         * PENTING: Fungsi ini tidak memanggil init() secara rekursif!
-         */
+        /** * Mengubah tampilan berdasarkan status admin. */
         function setAdminMode(isAdmin) {
             isUserAdmin = isAdmin;
 
@@ -987,7 +993,7 @@
                 logoutBtn.classList.remove('hidden');
                 downloadBtn.classList.remove('hidden');
                 adminPasswordInput.classList.add('hidden');
-                filterStatus.value = ''; // Hapus filter status saat admin login
+                filterStatus.value = ''; 
                 
                 // Tampilkan semua opsi status di filter
                 hiddenAdminStatusOptions.forEach(option => option.classList.remove('hidden-admin-status'));
@@ -1010,7 +1016,7 @@
                 
                 // Sembunyikan opsi pending/rejected di filter
                 hiddenAdminStatusOptions.forEach(option => option.classList.add('hidden-admin-status'));
-                filterStatus.value = 'approved'; // Default filter ke Disetujui
+                filterStatus.value = 'approved'; 
                 
                 // Muat hanya data yang disetujui (action='get_approved')
                 loadBookings().then(() => renderTable());
@@ -1054,7 +1060,6 @@
 
         // Tombol Refresh
         refreshBtn.addEventListener('click', () => {
-            // Panggil setAdminMode untuk memuat ulang data sesuai mode saat ini
             setAdminMode(isUserAdmin);
         });
 
@@ -1066,7 +1071,7 @@
         bookingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Validasi sederhana: pastikan tanggal mulai tidak lebih dari tanggal selesai (jika ada)
+            // Validasi sederhana: pastikan waktu selesai tidak lebih awal dari waktu mulai
             const startDate = document.getElementById('date').value;
             const startTime = document.getElementById('start').value;
             const endTime = document.getElementById('end').value;
@@ -1093,7 +1098,6 @@
         adminLoginBtn.addEventListener('click', () => {
             if (adminPasswordInput.value === ADMIN_PASSWORD) {
                 localStorage.setItem('adminLoggedIn', 'true');
-                // HANYA Panggil setAdminMode, yang akan memuat data dan merender tabel
                 setAdminMode(true);
             } else {
                 alert('Password salah!');
@@ -1104,24 +1108,17 @@
         // Admin Logout
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('adminLoggedIn');
-            // HANYA Panggil setAdminMode, yang akan memuat data dan merender tabel
             setAdminMode(false);
         });
 
 
         // --- FUNGSI INIALISASI APLIKASI UTAMA ---
         
-        /** * Fungsi yang dipanggil saat aplikasi dimuat pertama kali.
-         * HANYA SEKALI PANGGILAN DI AKHIR SCRIPT!
-         */
+        /** * Fungsi yang dipanggil saat aplikasi dimuat pertama kali. */
         function init() {
-            // 1. Cek status admin dari local storage
             const isAdmin = localStorage.getItem('adminLoggedIn') === 'true';
-            
-            // 2. Terapkan mode admin. setAdminMode akan mengurus pemuatan data (loadBookings) dan tampilan (renderTable).
             setAdminMode(isAdmin);
             
-            // Atur filter status default untuk publik
             if (!isAdmin) {
                 filterStatus.value = 'approved'; 
             }

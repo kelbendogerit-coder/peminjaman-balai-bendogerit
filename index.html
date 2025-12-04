@@ -46,8 +46,8 @@
             margin: 0;
 
             /* Menggunakan warna solid jika link gambar mati/tidak terdeteksi */
-            background-color: #f7f7f7; 
-            
+            background-color: #f7f7f7;
+
             background-image: url('https://artsology.com/blog/wp-content/uploads/2024/03/fusion-of-symbols-a-la-basquiat.jpg');
             background-attachment: fixed;
             background-size: cover;
@@ -142,7 +142,8 @@
         label {
             font-weight: 700;
             color: var(--color-secondary-retro);
-            display: block; /* Agar input di bawah label */
+            display: block;
+            /* Agar input di bawah label */
             margin-bottom: 5px;
         }
 
@@ -201,7 +202,8 @@
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            background: #A0A0A0; /* Warna abu-abu saat disabled */
+            background: #A0A0A0;
+            /* Warna abu-abu saat disabled */
         }
 
         .btn.small {
@@ -269,7 +271,8 @@
             font-weight: 700;
             display: inline-block;
             border: 1px solid currentColor;
-            min-width: 80px; /* Lebar minimum agar konsisten */
+            min-width: 80px;
+            /* Lebar minimum agar konsisten */
             text-align: center;
         }
 
@@ -292,7 +295,8 @@
             display: flex;
             gap: 5px;
             flex-wrap: nowrap;
-            min-width: 120px; /* Agar tombol tidak terlalu mepet */
+            min-width: 120px;
+            /* Agar tombol tidak terlalu mepet */
         }
 
         /* ADMIN DASHBOARD LAYOUT */
@@ -555,10 +559,10 @@
         /** Menampilkan pesan konfirmasi berhasil. */
         function showConfirmation(message) {
             confirmationMessage.innerHTML = `
-                <h4>✅ Pengajuan Berhasil Terkirim!</h4>
-                <p style="margin-bottom: 10px;">${message}</p>
-                <a href="javascript:void(0)" onclick="init()" style="font-weight: 700;">Lihat Jadwal Terkini</a>
-            `;
+                <h4>✅ Pengajuan Berhasil Terkirim!</h4>
+                <p style="margin-bottom: 10px;">${message}</p>
+                <a href="javascript:void(0)" onclick="init()" style="font-weight: 700;">Lihat Jadwal Terkini</a>
+            `;
             confirmationMessage.style.display = 'block';
             bookingForm.reset();
             bookingForm.parentElement.classList.add('hidden');
@@ -601,6 +605,7 @@
             let endpoint = `${WEB_APP_ENDPOINT}?action=${action}`;
 
             try {
+                // Baris 604: Panggilan fetch yang bermasalah di log error
                 const response = await fetch(endpoint);
 
                 if (!response.ok) {
@@ -636,9 +641,11 @@
                 }));
 
             } catch (e) {
+                // Baris 639: Penanganan error yang dilaporkan di log
                 console.error("Gagal memuat data:", e);
                 bookings = [];
                 alert(`Gagal memuat data jadwal. Silakan coba Refresh. Detail: ${e.message}`);
+                // PENTING: JANGAN PANGGIL init() ATAU setAdminMode() di sini
             }
         }
 
@@ -671,6 +678,7 @@
                 const result = await response.json();
                 if (result.result === 'success') {
                     showConfirmation(`Pengajuan Anda berhasil terkirim. ID Pengajuan: ${result.id || new Date().getTime()}.`);
+                    // Setelah sukses, muat ulang data dan render tabel
                     await loadBookings();
                     renderTable();
                     return true;
@@ -785,7 +793,7 @@
                 // Urutkan berdasarkan tanggal terdekat, lalu berdasarkan status (pending di atas)
                 const dateA = new Date(a.date);
                 const dateB = new Date(b.date);
-                
+
                 // Prioritaskan status Pending di atas
                 if (a.status === 'pending' && b.status !== 'pending') return -1;
                 if (a.status !== 'pending' && b.status === 'pending') return 1;
@@ -814,7 +822,7 @@
                         <strong>#${booking.row_index || '?'} ${booking.name}</strong><br>
                         <span class="muted">${(booking.notes || '').substring(0, 50)}...</span>
                         <div class="muted">
-                            <a href="mailto:${booking.email}">${booking.email || '-'}</a> | 
+                            <a href="mailto:${booking.email}">${booking.email || '-'}</a> | 
                             <a href="https://wa.me/${(booking.whatsapp || '').replace(/\D/g, '').replace(/^0/, '62')}" target="_blank">${booking.whatsapp || '-'}</a>
                         </div>
                     `;
@@ -836,116 +844,92 @@
                 }) : '-';
 
                 // Kolom 3: Jam (Jam Awal - Jam Akhir)
-                row.insertCell().textContent = `${formatTime(booking.start)} - ${formatTime(booking.end)}`; 
+                row.insertCell().textContent = `${formatTime(booking.start)} - ${formatTime(booking.end)}`;
 
                 // Col 4: Status
                 row.insertCell().innerHTML = getStatusBadge(booking.status);
 
                 // Col 5: Aksi (Kolom Aksi hanya tampil untuk Admin)
                 const actionCell = row.insertCell();
-                actionCell.className = 'action-cell';
-
                 if (isUserAdmin) {
-                    const actionGroup = document.createElement('div');
-                    actionGroup.className = 'action-btn-group';
-
-                    // Tombol Approve
-                    if (booking.status !== 'approved') {
+                    actionCell.classList.add('action-btn-group');
+                    if (booking.status === 'pending') {
+                        // Tombol Approve
                         const approveBtn = document.createElement('button');
-                        approveBtn.className = 'btn small';
-                        approveBtn.textContent = '✅ Setuju';
-                        approveBtn.style.background = APPROVED_COLOR;
+                        approveBtn.className = 'btn small s-approved';
+                        approveBtn.textContent = '✔';
+                        approveBtn.title = 'Setujui';
                         approveBtn.onclick = () => updateBookingStatus(booking.row_index, 'approved');
-                        actionGroup.appendChild(approveBtn);
-                    }
-                    // Tombol Reject
-                    if (booking.status !== 'rejected') {
+                        actionCell.appendChild(approveBtn);
+
+                        // Tombol Reject
                         const rejectBtn = document.createElement('button');
-                        rejectBtn.className = 'btn small';
-                        rejectBtn.textContent = '❌ Tolak';
-                        rejectBtn.style.background = REJECTED_COLOR;
+                        rejectBtn.className = 'btn small s-rejected';
+                        rejectBtn.textContent = '✖';
+                        rejectBtn.title = 'Tolak';
                         rejectBtn.onclick = () => updateBookingStatus(booking.row_index, 'rejected');
-                        actionGroup.appendChild(rejectBtn);
+                        actionCell.appendChild(rejectBtn);
+
+                    } else if (booking.status === 'approved' || booking.status === 'rejected') {
+                        // Tombol Ubah ke Pending (Jika sudah disetujui/ditolak)
+                        const pendingBtn = document.createElement('button');
+                        pendingBtn.className = 'btn small s-pending';
+                        pendingBtn.textContent = '⌛';
+                        pendingBtn.title = 'Ubah ke Menunggu';
+                        pendingBtn.onclick = () => updateBookingStatus(booking.row_index, 'pending');
+                        actionCell.appendChild(pendingBtn);
                     }
-                    actionCell.appendChild(actionGroup);
                 } else {
+                    // Non-admin hanya menampilkan strip di kolom aksi
                     actionCell.textContent = '-';
                 }
             });
         }
 
 
-        /** Mengupdate tampilan Dashboard Admin */
+        // --- FUNGSI DASHBOARD & CHART ---
+
+        /** Memperbarui statistik dan chart untuk admin. */
         function updateDashboard() {
             if (!isUserAdmin) return;
-            
-            const total = bookings.length;
-            const pending = bookings.filter(b => b.status === 'pending').length;
-            const approved = bookings.filter(b => b.status === 'approved').length;
 
-            statTotal.textContent = total;
-            statPending.textContent = pending;
-            statApproved.textContent = approved;
-            
-            renderCharts(bookings);
-        }
-
-        /** Merender Chart.js */
-        function renderCharts(data) {
-            // 1. Chart Status (Pie Chart)
-            const statusCounts = data.reduce((acc, b) => {
-                acc[b.status] = (acc[b.status] || 0) + 1;
+            const counts = bookings.reduce((acc, b) => {
+                acc.total++;
+                if (b.status === 'pending') acc.pending++;
+                if (b.status === 'approved') acc.approved++;
+                if (b.status === 'rejected') acc.rejected++;
                 return acc;
-            }, {});
+            }, { total: 0, pending: 0, approved: 0, rejected: 0 });
 
-            const statusLabels = Object.keys(statusCounts).map(s => s.charAt(0).toUpperCase() + s.slice(1));
-            const statusData = Object.values(statusCounts);
-            const statusColors = statusLabels.map(label => {
-                if (label === 'Approved') return APPROVED_COLOR;
-                if (label === 'Pending') return PENDING_COLOR;
-                if (label === 'Rejected') return REJECTED_COLOR;
-                return '#C0C0C0';
-            });
-            
+            statTotal.textContent = counts.total;
+            statPending.textContent = counts.pending;
+            statApproved.textContent = counts.approved;
+
+            // Chart Status
             if (chartStatusInstance) chartStatusInstance.destroy();
-
             const ctxStatus = document.getElementById('chartStatus').getContext('2d');
             chartStatusInstance = new Chart(ctxStatus, {
                 type: 'doughnut',
                 data: {
-                    labels: statusLabels,
+                    labels: ['Disetujui', 'Menunggu', 'Ditolak'],
                     datasets: [{
-                        data: statusData,
-                        backgroundColor: statusColors,
-                        borderWidth: 1
+                        data: [counts.approved, counts.pending, counts.rejected],
+                        backgroundColor: [APPROVED_COLOR, PENDING_COLOR, REJECTED_COLOR],
+                        hoverOffset: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    family: 'Roboto Slab',
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Status Pengajuan',
-                            font: {
-                                size: 14,
-                                family: 'Montserrat Alternates',
-                            }
-                        }
+                        legend: { position: 'bottom' },
+                        title: { display: true, text: 'Distribusi Status Pengajuan' }
                     }
                 }
             });
 
-            // 2. Chart Trend (Bar Chart per Bulan) - hanya jika data tersedia
-            const monthlyCounts = data.reduce((acc, b) => {
-                if (b.status === 'approved' && b.date) {
+            // Chart Trend (Berdasarkan Bulan)
+            const monthlyData = bookings.reduce((acc, b) => {
+                if (b.status === 'approved') {
                     const date = new Date(b.date);
                     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                     acc[monthKey] = (acc[monthKey] || 0) + 1;
@@ -953,159 +937,200 @@
                 return acc;
             }, {});
 
-            const sortedMonths = Object.keys(monthlyCounts).sort();
-            const trendLabels = sortedMonths.map(key => {
-                const [year, month] = key.split('-');
-                return `${new Date(year, month - 1).toLocaleString('id-ID', { month: 'short' })} ${year}`;
-            });
-            const trendData = sortedMonths.map(key => monthlyCounts[key]);
+            const sortedMonths = Object.keys(monthlyData).sort();
+            const chartData = sortedMonths.map(month => ({
+                month: new Date(month).toLocaleDateString('id-ID', { year: 'numeric', month: 'short' }),
+                count: monthlyData[month]
+            }));
 
             if (chartTrendInstance) chartTrendInstance.destroy();
-
             const ctxTrend = document.getElementById('chartTrend').getContext('2d');
             chartTrendInstance = new Chart(ctxTrend, {
                 type: 'bar',
                 data: {
-                    labels: trendLabels,
+                    labels: chartData.map(d => d.month),
                     datasets: [{
-                        label: 'Disetujui per Bulan',
-                        data: trendData,
+                        label: 'Pengajuan Disetujui per Bulan',
+                        data: chartData.map(d => d.count),
                         backgroundColor: APPROVED_COLOR,
+                        borderColor: APPROVED_COLOR,
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    if (value % 1 === 0) return value;
-                                },
-                                font: {
-                                    family: 'Roboto Slab',
-                                }
-                            }
-                        },
-                        x: {
-                             ticks: {
-                                font: {
-                                    family: 'Roboto Slab',
-                                }
-                            }
-                        }
-                    },
                     plugins: {
                         legend: { display: false },
-                        title: {
-                            display: true,
-                            text: 'Tren Peminjaman (Disetujui)',
-                            font: {
-                                size: 14,
-                                family: 'Montserrat Alternates',
-                            }
-                        }
+                        title: { display: true, text: 'Tren Peminjaman Disetujui' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
                     }
                 }
             });
         }
-        
-        // --- ADMIN LOGIN & LOGOUT ---
+
+
+        // --- FUNGSI ADMIN ---
+
+        /** * Mengubah tampilan berdasarkan status admin.
+         * PENTING: Fungsi ini tidak memanggil init() secara rekursif!
+         */
         function setAdminMode(isAdmin) {
             isUserAdmin = isAdmin;
-            localStorage.setItem('isAdmin', isAdmin);
 
-            // Tampilkan/Sembunyikan elemen admin
-            adminControls.classList.toggle('hidden', !isAdmin);
-            adminLoginBtn.classList.toggle('hidden', isAdmin);
-            adminPasswordInput.classList.toggle('hidden', isAdmin);
-            logoutBtn.classList.toggle('hidden', !isAdmin);
-            downloadBtn.classList.toggle('hidden', !isAdmin);
-            
-            // Tampilkan/Sembunyikan opsi status (Pending/Rejected) di filter
-            hiddenAdminStatusOptions.forEach(opt => opt.classList.toggle('hidden', !isAdmin));
-            
-            // Perbarui pesan status
-            adminStatusMsg.textContent = isAdmin ? 'Anda berhasil Login sebagai Admin.' : 'Login Admin di atas untuk melihat detail statistik.';
-            
-            // Muat ulang data (membutuhkan data lengkap jika Admin)
-            init();
+            if (isAdmin) {
+                // Tampilan Admin
+                adminControls.classList.remove('hidden');
+                adminStatusMsg.classList.add('hidden');
+                adminLoginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                downloadBtn.classList.remove('hidden');
+                adminPasswordInput.classList.add('hidden');
+                filterStatus.value = ''; // Hapus filter status saat admin login
+                
+                // Tampilkan semua opsi status di filter
+                hiddenAdminStatusOptions.forEach(option => option.classList.remove('hidden-admin-status'));
+
+                // Muat semua data (action='get_all')
+                loadBookings().then(() => {
+                    renderTable();
+                    updateDashboard();
+                });
+
+            } else {
+                // Tampilan Publik
+                adminControls.classList.add('hidden');
+                adminStatusMsg.classList.remove('hidden');
+                adminLoginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                downloadBtn.classList.add('hidden');
+                adminPasswordInput.classList.remove('hidden');
+                adminPasswordInput.value = '';
+                
+                // Sembunyikan opsi pending/rejected di filter
+                hiddenAdminStatusOptions.forEach(option => option.classList.add('hidden-admin-status'));
+                filterStatus.value = 'approved'; // Default filter ke Disetujui
+                
+                // Muat hanya data yang disetujui (action='get_approved')
+                loadBookings().then(() => renderTable());
+            }
         }
 
-        adminLoginBtn.addEventListener('click', () => {
-            if (adminPasswordInput.value === ADMIN_PASSWORD) {
-                setAdminMode(true);
-                adminPasswordInput.value = '';
-            } else {
-                alert('Password Admin Salah!');
-                adminPasswordInput.value = '';
-            }
+        // --- EXPORT DATA (XLSX) ---
+
+        function exportToXLSX() {
+            if (!isUserAdmin) return alert('Akses ditolak.');
+
+            const dataToExport = bookings.map(b => ({
+                "ID Baris": b.row_index,
+                "Waktu Submit": b.timestamp,
+                "Nama Lengkap": b.name,
+                "Email": b.email,
+                "WhatsApp": b.whatsapp,
+                "Venue": b.venue,
+                "Tanggal": b.date,
+                "Mulai": formatTime(b.start),
+                "Selesai": formatTime(b.end),
+                "Deskripsi": b.notes,
+                "Status": b.status.toUpperCase()
+            }));
+
+            if (dataToExport.length === 0) return alert('Tidak ada data yang tersedia untuk diunduh.');
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data Peminjaman");
+            XLSX.writeFile(workbook, "Data_Peminjaman_Balai_Bendogerit.xlsx");
+        }
+
+
+        // --- EVENT HANDLERS ---
+
+        // Panggil renderTable saat ada perubahan di filter atau search
+        searchInput.addEventListener('input', renderTable);
+        filterVenue.addEventListener('change', renderTable);
+        filterStatus.addEventListener('change', renderTable);
+
+        // Tombol Refresh
+        refreshBtn.addEventListener('click', () => {
+            // Panggil setAdminMode untuk memuat ulang data sesuai mode saat ini
+            setAdminMode(isUserAdmin);
         });
 
-        logoutBtn.addEventListener('click', () => {
-            setAdminMode(false);
-            alert('Anda telah Logout dari Mode Admin.');
-        });
-        
-        // --- EVENT LISTENERS LAINNYA ---
+        // Tombol Download
+        downloadBtn.addEventListener('click', exportToXLSX);
+
+
+        // Form Submission
         bookingForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Validasi sederhana: pastikan tanggal mulai tidak lebih dari tanggal selesai (jika ada)
+            const startDate = document.getElementById('date').value;
+            const startTime = document.getElementById('start').value;
+            const endTime = document.getElementById('end').value;
+
+            if (startTime >= endTime) {
+                return alert("Waktu selesai harus lebih lambat dari waktu mulai.");
+            }
+
             const data = {
                 name: document.getElementById('name').value,
                 email: document.getElementById('email').value,
                 whatsapp: document.getElementById('whatsapp').value,
                 venue: document.getElementById('venue').value,
-                date: document.getElementById('date').value,
-                start: document.getElementById('start').value,
-                end: document.getElementById('end').value,
+                date: startDate,
+                start: startTime,
+                end: endTime,
                 notes: document.getElementById('notes').value
             };
+
             await addBooking(data);
         });
-        
-        refreshBtn.addEventListener('click', init);
-        searchInput.addEventListener('input', renderTable);
-        filterVenue.addEventListener('change', renderTable);
-        filterStatus.addEventListener('change', renderTable);
-        
-        // Fungsi Download Data Excel (Hanya Admin)
-        downloadBtn.addEventListener('click', () => {
-            if (!isUserAdmin) return alert('Akses ditolak!');
-            
-            // Persiapan data untuk sheetjs
-            const exportData = bookings.map(b => ({
-                'ID Baris': b.row_index,
-                'Waktu Submit': new Date(b.timestamp).toLocaleString('id-ID'),
-                'Nama Pemohon': b.name,
-                'Email': b.email,
-                'WhatsApp': b.whatsapp,
-                'Venue': b.venue,
-                'Tanggal': b.date ? new Date(b.date).toLocaleDateString('id-ID') : '-',
-                'Waktu Mulai': formatTime(b.start),
-                'Waktu Selesai': formatTime(b.end),
-                'Deskripsi': b.notes,
-                'Status': b.status.toUpperCase()
-            }));
-            
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "DataPeminjaman");
-            XLSX.writeFile(wb, "Data_Peminjaman_Balai.xlsx");
+
+        // Admin Login
+        adminLoginBtn.addEventListener('click', () => {
+            if (adminPasswordInput.value === ADMIN_PASSWORD) {
+                localStorage.setItem('adminLoggedIn', 'true');
+                // HANYA Panggil setAdminMode, yang akan memuat data dan merender tabel
+                setAdminMode(true);
+            } else {
+                alert('Password salah!');
+                adminPasswordInput.value = '';
+            }
         });
 
-        /** Inisialisasi Aplikasi */
-        async function init() {
-            // Cek status admin dari local storage
-            const storedAdmin = localStorage.getItem('isAdmin') === 'true';
-            setAdminMode(storedAdmin); // Ini akan memanggil loadBookings()
+        // Admin Logout
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('adminLoggedIn');
+            // HANYA Panggil setAdminMode, yang akan memuat data dan merender tabel
+            setAdminMode(false);
+        });
+
+
+        // --- FUNGSI INIALISASI APLIKASI UTAMA ---
+        
+        /** * Fungsi yang dipanggil saat aplikasi dimuat pertama kali.
+         * HANYA SEKALI PANGGILAN DI AKHIR SCRIPT!
+         */
+        function init() {
+            // 1. Cek status admin dari local storage
+            const isAdmin = localStorage.getItem('adminLoggedIn') === 'true';
             
-            await loadBookings();
-            renderTable();
-            updateDashboard();
+            // 2. Terapkan mode admin. setAdminMode akan mengurus pemuatan data (loadBookings) dan tampilan (renderTable).
+            setAdminMode(isAdmin);
+            
+            // Atur filter status default untuk publik
+            if (!isAdmin) {
+                filterStatus.value = 'approved'; 
+            }
         }
 
-        window.onload = init;
+        // PANGGILAN INI HANYA SATU KALI UNTUK MEMULAI SEMUA!
+        init();
+
     </script>
 </body>
+
 </html>

@@ -517,11 +517,15 @@
     </div>
 
     <script>
-        // --- KONFIGURASI PENTING ---
+        // ==========================================================
+        // === KONFIGURASI APLIKASI WEB - WAJIB DIUBAH!
+        // ==========================================================
         // GANTI INI DENGAN URL WEB APP DEPLOYMENT TERBARU ANDA
         const WEB_APP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzY4hUvFiC-pkckHOoDeVHXex6dFZas_ofiq4n8QPc3xY2Qg0jXQ29MJPYigM6j7HTTkg/exec'; 
         // WAJIB GANTI PASSWORD KUAT INI!
         const ADMIN_PASSWORD = 'Patimura92@#%'; 
+        // ==========================================================
+
 
         const APPROVED_COLOR = '#3c763d';
         const PENDING_COLOR = '#9d5c0d';
@@ -574,19 +578,18 @@
         }
 
         /**
-         * Mengubah string waktu ISO (misal: 1899-12-30T02:17:56.000Z) atau string waktu (09:00) menjadi HH:MM.
-         * @param {string | number} timeString
+         * Mengubah string waktu ISO atau string waktu (09:00) menjadi HH:MM.
          */
         function formatTime(timeString) {
             if (!timeString) return '-';
             const timeStr = String(timeString);
 
-            // 1. Cek apakah format sudah HH:MM (ini terjadi saat data baru dikirim dari form)
+            // 1. Cek apakah format sudah HH:MM 
             if (timeStr.match(/^\d{2}:\d{2}$/)) {
                 return timeStr;
             }
 
-            // 2. Cek apakah format adalah ISO date-time string (ini terjadi saat data ditarik dari Apps Script)
+            // 2. Cek apakah format adalah ISO date-time string 
             try {
                 const dateObj = new Date(timeStr);
                 if (!isNaN(dateObj) && dateObj.getTime() !== 0) {
@@ -621,13 +624,13 @@
                 if (!response.ok) {
                     const errorText = await response.text();
                     console.error('HTTP Error Details:', errorText);
-                    throw new Error(`HTTP Error! Status ${response.status}. Cek Deployment Apps Script.`);
+                    throw new Error(`HTTP Error! Status ${response.status}. Pastikan URL Web App benar dan Apps Script sudah di-deploy ulang.`);
                 }
 
                 let data = await response.json();
 
                 if (data && data.result === 'error') {
-                    throw new Error(data.message || 'Error dari Apps Script: Cek ID Spreadsheet Anda.');
+                    throw new Error(data.message || 'Error dari Apps Script: Cek ID Spreadsheet Anda atau log Apps Script.');
                 }
 
                 if (!Array.isArray(data)) {
@@ -636,8 +639,8 @@
 
                 // Normalisasi data: Ambil properti dari Apps Script.
                 bookings = data.map(b => ({
-                    id: b.id || b.ID || new Date().getTime(), // Fallback ID
-                    row_index: b.row_index || b.ROW_INDEX, // PENTING UNTUK ADMIN
+                    id: b.id || b.ID || new Date().getTime(), 
+                    row_index: b.row_index || b.ROW_INDEX, 
                     timestamp: b.timestamp || b.waktu_submit || b.WAKTU_SUBMIT,
                     name: (b.name || b.nama_lengkap || b.NAMA_LENGKAP || ''),
                     email: (b.email || b.EMAIL || ''),
@@ -653,7 +656,7 @@
             } catch (e) {
                 console.error("Gagal memuat data:", e);
                 bookings = [];
-                alert(`Gagal memuat data jadwal. Silakan coba Refresh. Detail: ${e.message}`);
+                alert(`Gagal memuat data jadwal. Silakan coba Refresh. Detail: ${e.message}. (Cek log Browser untuk error CORS)`);
             }
         }
 
@@ -939,7 +942,8 @@
             const monthlyData = bookings.reduce((acc, b) => {
                 if (b.status === 'approved') {
                     const date = new Date(b.date);
-                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    // Pastikan format date adalah string YYYY-MM
+                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; 
                     acc[monthKey] = (acc[monthKey] || 0) + 1;
                 }
                 return acc;

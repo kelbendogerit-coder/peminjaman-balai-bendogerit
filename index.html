@@ -635,7 +635,7 @@
       const logoutBtn = document.getElementById("logoutBtn");
       const adminControls = document.getElementById("adminControls");
       const adminStatusMsg = document.getElementById("adminStatusMsg");
-      const downloadBtn = document.getElementById("downloadBtn");
+      //const downloadBtn = document.getElementById("downloadBtn");
       const refreshBtn = document.getElementById("refreshBtn");
       const searchInput = document.getElementById("searchInput");
       const filterVenue = document.getElementById("filterVenue");
@@ -1226,7 +1226,7 @@
           adminStatusMsg.classList.add("hidden");
           adminLoginBtn.classList.add("hidden");
           logoutBtn.classList.remove("hidden");
-          downloadBtn.classList.remove("hidden");
+          //downloadBtn.classList.remove("hidden");
           adminPasswordInput.classList.add("hidden");
           filterStatus.value = "";
 
@@ -1246,7 +1246,7 @@
           adminStatusMsg.classList.remove("hidden");
           adminLoginBtn.classList.remove("hidden");
           logoutBtn.classList.add("hidden");
-          downloadBtn.classList.add("hidden");
+          //downloadBtn.classList.add("hidden");
           adminPasswordInput.classList.remove("hidden");
           adminPasswordInput.value = "";
 
@@ -1302,7 +1302,7 @@
       });
 
       // Tombol Download
-      downloadBtn.addEventListener("click", exportToXLSX);
+      //downloadBtn.addEventListener("click", exportToXLSX);
 
       // Form Submission
       bookingForm.addEventListener("submit", async (e) => {
